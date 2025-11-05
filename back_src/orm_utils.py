@@ -27,14 +27,14 @@ def delete_database():
     return {"return": True}
 
 
-def add_user(new_user, session: Session):
+def add_user(session: Session, new_user):
     session.add(new_user)
     session.commit()
 
 
 def get_user_by_email(
-    email,
     session: Session,
+    email,
     table: Base = Users,
 ):
     result = session.execute(
@@ -44,8 +44,8 @@ def get_user_by_email(
 
 
 def get_user_by_id(
-    id,
     session: Session,
+    id,
     table: Base = Users,
 ):
     result = session.execute(select(table).where(id == Users.id)).scalar_one_or_none()

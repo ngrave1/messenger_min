@@ -51,7 +51,7 @@ def check_password(password: str, hashed_password: bytes) -> bool:
 
 
 def valid_auth_user(credentials: UserSchema, session: SessionDep):
-    result = get_user_by_email(credentials.email, session)
+    result = get_user_by_email(session, credentials.email)
     if result == None:
         raise HTTPException(status_code=401, detail="invalid token")
     access = check_password(
@@ -85,9 +85,9 @@ def create_refresh_token(
 
 def check_user(payload: dict, token_type: str, session: Session):
     if token_type == "access_token":
-        result = get_user_by_email(payload["email"], session)
+        result = get_user_by_email(session, payload["email"])
     else:
-        result = get_user_by_id(payload["sub"], session)
+        result = get_user_by_id(session, payload["sub"])
     return result
 
 

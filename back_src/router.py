@@ -42,18 +42,18 @@ def update_database(
     session: SessionDep,
     user: UserSchema,
 ):
-    existing_user = get_user_by_email(user.email, session)
+    existing_user = get_user_by_email(session, user.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
     new_user = Users(email=user.email, password=hash_password(user.password))
-    add_user(new_user, session)
-    return {"return": "user added"}
+    add_user(session, new_user)
+    return {"return": f"user added, id {user.email}"}
 
 
-@router.get("/check_token/")
+@router.patch("/check_token/")
 def check_access_token(
     session: SessionDep,
     access_token: str = Cookie(alias="access_token"),
@@ -69,4 +69,4 @@ def check_access_token(
             refreshed_token = release_access_token(refresh_token, session)
             return refreshed_token
         except:
-            raise HTTPException(status_code=401, detail="autorisation failed")
+            raise HTTPException(status_code=401, detail="authorization failed")
