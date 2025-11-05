@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Cookie
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session 
 from model_table import Users
 from user_models import UserSchema
 from jwt_utils import (
@@ -11,8 +10,6 @@ from jwt_utils import (
     valid_auth_user,
     hash_password,
     decode_jwt,
-    generate_session_id,
-    Cookies
 )
 from orm_utils import add_user, get_user_by_email
 from dependencies import SessionDep
@@ -27,10 +24,6 @@ def login(
 ):
     token = create_access_token(user)
     refresh_token = create_refresh_token(user)
-    session_id = generate_session_id()
-    Cookies[session_id] = {
-        "access_token": token,
-    }
     response = JSONResponse(
         content={
             "refresh_token": refresh_token,
