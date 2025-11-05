@@ -5,15 +5,11 @@ from config import settings
 
 
 engine = create_engine(
-    url=settings.DATABASE_URL_psycopg2,
-    echo=True,
-    pool_size=5,
-    max_overflow=10
+    url=settings.DATABASE_URL_psycopg2, echo=True, pool_size=5, max_overflow=10
 )
 
 
-session_factory = sessionmaker(engine,
-    expire_on_commit=False)
+session_factory = sessionmaker(engine, expire_on_commit=False)
 
 
 def get_session():
@@ -23,20 +19,17 @@ def get_session():
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
-    return({"return" : True})
+    return {"return": True}
 
 
 def delete_database():
     Base.metadata.drop_all(bind=engine)
-    return({"return" : True})
+    return {"return": True}
 
 
-def add_user(
-        new_user,
-        session: Session
-): 
-        session.add(new_user)
-        session.commit()
+def add_user(new_user, session: Session):
+    session.add(new_user)
+    session.commit()
 
 
 def get_user_by_email(
@@ -44,7 +37,9 @@ def get_user_by_email(
     session: Session,
     table: Base = Users,
 ):
-    result = session.execute(select(table).where(email == Users.email)).scalar_one_or_none()
+    result = session.execute(
+        select(table).where(email == Users.email)
+    ).scalar_one_or_none()
     return result
 
 

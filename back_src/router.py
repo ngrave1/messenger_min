@@ -28,39 +28,29 @@ def login(
         content={
             "refresh_token": refresh_token,
             "access_token": token,
-            "token_type": "Bearer"
+            "token_type": "Bearer",
         }
     )
-    response.set_cookie(
-        key="access_token", 
-        value=token
-        )
-    response.set_cookie(
-        key="refresh_token", 
-        value=refresh_token
-        )
+    response.set_cookie(key="access_token", value=token)
+    response.set_cookie(key="refresh_token", value=refresh_token)
 
     return response
 
 
 @router.post("/register/")
 def update_database(
-        session: SessionDep,
-        user: UserSchema,
-    ):
+    session: SessionDep,
+    user: UserSchema,
+):
     existing_user = get_user_by_email(user.email, session)
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
-    
-    new_user = Users(
-        email = user.email,
-        password = hash_password(user.password)
-    )
+
+    new_user = Users(email=user.email, password=hash_password(user.password))
     add_user(new_user, session)
-    return({"return": "user added"})
+    return {"return": "user added"}
 
 
 @router.get("/check_token/")
@@ -72,12 +62,11 @@ def check_access_token(
     try:
         payload = decode_jwt(access_token)
         result = check_user(payload=payload, token_type="access_token", session=session)
-        if result and payload['token_type'] == "access_token":
-            return {"result" : True}
+        if result and payload["token_type"] == "access_token":
+            return {"result": True}
     except:
         try:
             refreshed_token = release_access_token(refresh_token, session)
             return refreshed_token
         except:
             raise HTTPException(status_code=401, detail="autorisation failed")
-    
