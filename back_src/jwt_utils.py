@@ -1,6 +1,5 @@
 import jwt
 import bcrypt
-import uuid
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -101,8 +100,7 @@ def release_access_token(
             payload=payload, token_type="refresh_token", session=session
         )
         if result and payload["token_type"] == "refresh_token":
-            user = result
-            token = create_access_token(user)
+            token = create_access_token(result)
             response = JSONResponse(
                 content={
                     "access_token": token,
