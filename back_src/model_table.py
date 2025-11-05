@@ -7,7 +7,7 @@ class Base(DeclarativeBase):
 
 
 class Users(Base):
-    __tablename__ = "autorisation"
+    __tablename__ = "authorization"
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255))
     password: Mapped[bytes] = mapped_column(LargeBinary)

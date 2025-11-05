@@ -1,4 +1,3 @@
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Cookie
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session 
@@ -68,7 +67,7 @@ def update_database(
         password = hash_password(user.password)
     )
     add_user(new_user, session)
-    return({"return" : "user added"})
+    return({"return": "user added"})
 
 
 @router.get("/check_token/")

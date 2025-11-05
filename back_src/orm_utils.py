@@ -1,7 +1,5 @@
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, Session 
-from fastapi import Depends
-from typing import Annotated
+from sqlalchemy.orm import sessionmaker, Session
 from model_table import Base, Users
 from config import settings
 
@@ -23,30 +21,37 @@ def get_session():
         yield session
 
 
-SessionDep = Annotated[Session, Depends(get_session)]
-
-
 def create_tables():
     Base.metadata.create_all(bind=engine)
     return({"return" : True})
+
+
 def delete_database():
     Base.metadata.drop_all(bind=engine)
     return({"return" : True})
 
 
 def add_user(
-        NewUser,
+        new_user,
+        session: Session
 ): 
-    with session_factory() as session:
-        session.add(NewUser)
+        session.add(new_user)
         session.commit()
 
 
-def custom_query_where(
-        FirstArg,
-        SecondArg,
-        table : Base = Users,
+def get_user_by_email(
+    email,
+    session: Session,
+    table: Base = Users,
 ):
-    with session_factory() as session:
-        result = session.execute(select(table).where(FirstArg == SecondArg)).scalar_one_or_none()
-        return result
+    result = session.execute(select(table).where(email == Users.email)).scalar_one_or_none()
+    return result
+
+
+def get_user_by_id(
+    id,
+    session: Session,
+    table: Base = Users,
+):
+    result = session.execute(select(table).where(id == Users.id)).scalar_one_or_none()
+    return result
