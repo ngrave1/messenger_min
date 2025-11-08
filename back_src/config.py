@@ -3,22 +3,22 @@ from pydantic import BaseModel
 from pathlib import Path
 
 
-class DataBaseSettings(BaseSettings):
-    DB_HOST: str
-    DB_PORT: int
-    DB_USER: str
-    DB_PASS: int
-    DB_NAME: str
+class DatabaseSettings(BaseSettings):
+    host: str
+    port: int
+    user: str
+    password: str
+    name: str
+
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="db_", extra="ignore")
 
     @property
-    def DATABASE_URL_asyncpg(self):
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+    def url_asyncpg(self):
+        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
     @property
-    def DATABASE_URL_psycopg2(self):
-        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
-    model_config = SettingsConfigDict(env_file=".env")
+    def url_psycopg2(self):
+        return f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
 class AuthJWT(BaseModel):
@@ -30,10 +30,10 @@ class AuthJWT(BaseModel):
 
 
 class Settings(BaseSettings):
+    database: DatabaseSettings = DatabaseSettings()
+    auth_jwt: AuthJWT = AuthJWT()
 
-    DataBaseSettings: BaseSettings = DataBaseSettings()
-
-    authJWT: AuthJWT = AuthJWT()
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

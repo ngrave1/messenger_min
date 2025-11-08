@@ -8,10 +8,9 @@ from jwt_utils import (
     create_refresh_token,
     check_user,
     valid_auth_user,
-    hash_password,
     decode_jwt,
 )
-from orm_utils import add_user, get_user_by_email
+from orm_utils import add_user, get_user_by_email, create_user
 from dependencies import SessionDep
 
 
@@ -48,7 +47,7 @@ def update_database(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
-    new_user = Users(email=user.email, password=hash_password(user.password))
+    new_user = create_user(user.email, user.password)
     add_user(session, new_user)
     return {"return": f"user added, id {user.email}"}
 

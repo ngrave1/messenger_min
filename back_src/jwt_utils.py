@@ -1,9 +1,9 @@
 import jwt
-import bcrypt
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from password_utils import check_password
 from orm_utils import get_user_by_email, get_user_by_id
 from user_models import UserSchema
 from config import settings
@@ -13,13 +13,13 @@ from dependencies import SessionDep
 def encode_jwt(
     payload: dict,
     token_type: str,
-    private_key: str = settings.authJWT.private_key_path.read_text(),
-    algorithm: str = settings.authJWT.algorithm,
+    private_key: str = settings.auth_jwt.private_key_path.read_text(),
+    algorithm: str = settings.auth_jwt.algorithm,
 ):
     if token_type == "access_token":
-        expire_time = timedelta(minutes=settings.authJWT.access_token_expire)
+        expire_time = timedelta(minutes=settings.auth_jwt.access_token_expire)
     else:
-        expire_time = timedelta(days=settings.authJWT.refresh_token_expire)
+        expire_time = timedelta(days=settings.auth_jwt.refresh_token_expire)
     now = datetime.utcnow()
     expire = now + expire_time
     payload_exp = payload.copy()
@@ -32,21 +32,11 @@ def encode_jwt(
 
 def decode_jwt(
     token: str | bytes,
-    public_key: str = settings.authJWT.public_key_path.read_text(),
-    algorithm: str = settings.authJWT.algorithm,
+    public_key: str = settings.auth_jwt.public_key_path.read_text(),
+    algorithm: str = settings.auth_jwt.algorithm,
 ):
     decoded = jwt.decode(token, public_key, algorithms=[algorithm])
     return decoded
-
-
-def hash_password(password: str) -> bytes:
-    salt = bcrypt.gensalt()
-    pwd_bytes: bytes = password.encode()
-    return bcrypt.hashpw(pwd_bytes, salt)
-
-
-def check_password(password: str, hashed_password: bytes) -> bool:
-    return bcrypt.checkpw(password=password.encode(), hashed_password=hashed_password)
 
 
 def valid_auth_user(credentials: UserSchema, session: SessionDep):
