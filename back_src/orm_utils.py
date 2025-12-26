@@ -54,6 +54,17 @@ def get_user_by_email(
     ).scalar_one_or_none()
 
 
+def delete_user_orm(
+    session: Session,
+    user_id: int,
+):
+    user = get_user_by_id(session, user_id)
+    if not user:
+        raise
+    session.execute(delete(Users).where(Users.id == user_id))
+    session.commit()
+
+
 def get_user_by_id(
     session: Session,
     id,
@@ -65,14 +76,18 @@ def get_post_by_id(
     session: Session,
     post_id: int,
 ):
-    return session.execute(select(Posts).where(Posts.id == post_id)).scalar_one_or_none()
+    return session.execute(
+        select(Posts).where(Posts.id == post_id)
+    ).scalar_one_or_none()
 
 
 def get_comment_by_id(
     session: Session,
     comment_id: int,
 ):
-    return session.execute(select(Comments).where(Comments.id == comment_id)).scalar_one_or_none()
+    return session.execute(
+        select(Comments).where(Comments.id == comment_id)
+    ).scalar_one_or_none()
 
 
 def create_user(
@@ -81,13 +96,28 @@ def create_user(
 ):
     return Users(email=email, password=hash_password(password))
 
+
 def create_post(
     title: str,
     content: str,
     author_id: str,
-    
 ):
     return Posts(title=title, content=content, author_id=int(author_id))
+
+
+def delete_post_orm(
+    session: Session,
+    post_id: int,
+):
+    try:
+        post = get_post_by_id(session, post_id)
+        if not post:
+            raise ValueError(f"Post with id {post_id} not found")
+        session.execute(delete(Posts).where(Posts.id == post_id))
+        session.commit()
+    except:
+        session.rollback()
+        raise
 
 
 def create_comment(
@@ -96,21 +126,39 @@ def create_comment(
     author_id: str,
     post_id: int,
     parent_id: int,
-    
 ):
-    return Comments(title=title, content=content, author_id=int(author_id), post_id=post_id, parent_id=parent_id)
+    return Comments(
+        title=title,
+        content=content,
+        author_id=int(author_id),
+        post_id=post_id,
+        parent_id=parent_id,
+    )
+
+
+def delete_comment_orm(
+    session: Session,
+    comment_id: int,
+):
+    try:
+        comment = get_comment_by_id(session, comment_id)
+        if not comment:
+            raise ValueError(f"Comment with id {comment_id} not found")
+        session.execute(delete(Comments).where(Comments.id == comment_id))
+        session.commit()
+    except:
+        session.rollback()
+        raise
 
 
 def create_follower_pair(
     session: Session,
     follower_id: int,
-    following_id: int, 
-
+    following_id: int,
 ):
     reverse_friendship = session.execute(
         select(Friends).where(
-            Friends.follower_id == following_id,
-            Friends.following_id == follower_id
+            Friends.follower_id == following_id, Friends.following_id == follower_id
         )
     ).scalar_one_or_none()
     is_friends = False
@@ -118,51 +166,68 @@ def create_follower_pair(
         is_friends = True
         reverse_friendship.is_friends = True
         session.commit()
-    return Friends(follower_id=follower_id, following_id=following_id, is_friends=is_friends)
-    
+    return Friends(
+        follower_id=follower_id, following_id=following_id, is_friends=is_friends
+    )
+
 
 def is_frendship_exist(
     session: Session,
     follower_id: int,
-    following_id: int, 
+    following_id: int,
 ):
-    result = session.execute(select(Friends).where(Friends.follower_id == follower_id, Friends.following_id == following_id)).scalar_one_or_none()
+    result = session.execute(
+        select(Friends).where(
+            Friends.follower_id == follower_id, Friends.following_id == following_id
+        )
+    ).scalar_one_or_none()
     return result is not None
-    
+
 
 def check_frendship(
-        session: Session,
-        follower_id: int,
-        following_id: int,
+    session: Session,
+    follower_id: int,
+    following_id: int,
 ):
-    if session.execute(select(Friends).where(Friends.follower_id == follower_id & Friends.following_id == following_id & Friends.is_friends == True)):
+    if session.execute(
+        select(Friends).where(
+            Friends.follower_id
+            == follower_id & Friends.following_id
+            == following_id & Friends.is_friends
+            == True
+        )
+    ):
         return "friends"
-    elif session.execute(select(Friends).where(Friends.follower_id == follower_id & Friends.following_id == following_id)):
+    elif session.execute(
+        select(Friends).where(
+            Friends.follower_id == follower_id & Friends.following_id == following_id
+        )
+    ):
         return "follower"
     else:
         return None
 
 
 def get_posts_orm(
-        session: Session,
-        limit: int,
-        offset: int,
+    session: Session,
+    limit: int,
+    offset: int,
 ):
-    result = session.execute(select(Posts)
-                             .order_by(desc(Posts.updated_at))
-                             .limit(limit=limit)
-                             .offset(offset=offset)
-                             .options(selectinload(Posts.author))
-                             ).scalars().all()
+    result = (
+        session.execute(
+            select(Posts)
+            .order_by(desc(Posts.updated_at))
+            .limit(limit=limit)
+            .offset(offset=offset)
+            .options(selectinload(Posts.author))
+        )
+        .scalars()
+        .all()
+    )
     return result
 
 
-def get_comments_orm(
-        session: Session,
-        limit: int,
-        offset: int,
-        post_id: int
-):
+def get_comments_orm(session: Session, limit: int, offset: int, post_id: int):
     query = (
         select(Comments)
         .where(Comments.post_id == post_id)
@@ -180,14 +245,12 @@ def get_comments_orm(
         .limit(limit)
         .offset(offset)
     )
-    
+
     return session.execute(query).scalars().all()
 
 
 def get_all_following_by_user_id(
-    session: Session,
-    user_id: int,
-    only_friends: bool = False
+    session: Session, user_id: int, only_friends: bool = False
 ):
 
     user = session.execute(
@@ -195,31 +258,35 @@ def get_all_following_by_user_id(
         .where(Users.id == user_id)
         .options(selectinload(Users.following_relations))
     ).scalar_one_or_none()
-    
+
     if not user:
         return []
-    
+
     following = []
-    
+
     for friendship in user.following_relations:
         if only_friends:
             if friendship.is_friends:
-                following.append({
-                    "id": friendship.following.id,
-                    "email": friendship.following.email,
-                    "is_friends": friendship.is_friends,
-                })
+                following.append(
+                    {
+                        "id": friendship.following.id,
+                        "email": friendship.following.email,
+                        "is_friends": friendship.is_friends,
+                    }
+                )
         else:
-            following.append({
+            following.append(
+                {
                     "id": friendship.following.id,
                     "email": friendship.following.email,
                     "is_friends": friendship.is_friends,
-                })
-    
+                }
+            )
+
     return following
 
 
-def delete_friendship(
+def delete_friendship_orm(
     session: Session,
     follower_id: int,
     following_id: int,
@@ -227,48 +294,65 @@ def delete_friendship(
     try:
         session.execute(
             delete(Friends).where(
-                Friends.follower_id == follower_id,
-                Friends.following_id == following_id
+                Friends.follower_id == follower_id, Friends.following_id == following_id
             )
         )
-        
+
         reverse_friendship_stmt = select(Friends).where(
-            Friends.follower_id == following_id,
-            Friends.following_id == follower_id
+            Friends.follower_id == following_id, Friends.following_id == follower_id
         )
-        
-        reverse_friendship = session.execute(reverse_friendship_stmt).scalar_one_or_none()
+
+        reverse_friendship = session.execute(
+            reverse_friendship_stmt
+        ).scalar_one_or_none()
 
         if reverse_friendship:
             reverse_friendship.is_friends = False
         session.commit()
-        
+
     except Exception as e:
         session.rollback()
         raise
 
- 
+
 def create_message_orm(
-        content: str,
-        sender_id: int,
-        recipient_id: int,
+    content: str,
+    sender_id: int,
+    recipient_id: int,
 ):
     return Messages(content=content, sender_id=sender_id, recipient_id=recipient_id)
 
 
 def get_full_chat_by_user_id(
-        session: Session,
-        user_id: int, 
-        other_user_id: int,
+    session: Session,
+    user_id: int,
+    other_user_id: int,
 ):
-    result = session.execute(select(Messages).where(((Messages.sender_id == user_id) & (Messages.recipient_id == other_user_id)) 
-                                                 | ((Messages.sender_id == other_user_id) & (Messages.recipient_id == user_id)))
-                                                 .order_by(Messages.sender_id)).scalars().all()
+    result = (
+        session.execute(
+            select(Messages)
+            .where(
+                (
+                    (Messages.sender_id == user_id)
+                    & (Messages.recipient_id == other_user_id)
+                )
+                | (
+                    (Messages.sender_id == other_user_id)
+                    & (Messages.recipient_id == user_id)
+                )
+            )
+            .order_by(Messages.sender_id)
+        )
+        .scalars()
+        .all()
+    )
     messages = []
     for message in result:
-        messages.append({
-            "content": message.content,
-            "sender_id": message.sender_id,
-            "recipient_id": message.recipient_id,
-        })
+        messages.append(
+            {
+                "content": message.content,
+                "sender_id": message.sender_id,
+                "recipient_id": message.recipient_id,
+            }
+        )
     return messages

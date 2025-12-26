@@ -10,11 +10,7 @@ class DatabaseSettings(BaseSettings):
     password: str = Field(default="1488")
     name: str = Field(default="postgres")
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_prefix="db_",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="db_", extra="ignore")
 
     @property
     def url_asyncpg(self):
@@ -37,10 +33,7 @@ class Settings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     auth_jwt: AuthJWT = AuthJWT()
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

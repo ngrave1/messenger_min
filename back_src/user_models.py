@@ -21,7 +21,15 @@ class CommentADDSchema(BaseModel):
     post_id: int = Field(gt=0)
     parent_id: int | None = None
     author_token: str
-    
+
+
+class PostDeleteSchema(BaseModel):
+    post_id: int
+
+
+class CommentDeleteSchema(BaseModel):
+    comment_id: int
+
 
 class PostADDSchema(BaseModel):
     title: str = Field(min_length=1)
@@ -31,8 +39,11 @@ class PostADDSchema(BaseModel):
 
 class UserDTOSchema(BaseModel):
     id: int
+
+
+class UserEmailDTOSchema(UserDTOSchema):
     email: str
-    
+
 
 class PostDTOSchema(BaseModel):
     id: int
@@ -76,5 +87,3 @@ class MessageADDSchema(BaseModel):
     content: str
     sender_id: int
     recipient_id: int
-
-    
