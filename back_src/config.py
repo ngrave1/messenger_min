@@ -1,14 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pathlib import Path
 
 
 class DatabaseSettings(BaseSettings):
-    host: str
-    port: int
-    user: str
-    password: str
-    name: str
+    host: str = Field(default="localhost")
+    port: int = Field(default=5438)
+    user: str = Field(default="postgres")
+    password: str = Field(default="1488")
+    name: str = Field(default="postgres")
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="db_", extra="ignore")
 

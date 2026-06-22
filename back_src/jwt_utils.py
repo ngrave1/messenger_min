@@ -1,7 +1,6 @@
 import jwt
 from datetime import datetime, timedelta
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from password_utils import check_password
 from orm_utils import get_user_by_email, get_user_by_id
@@ -80,6 +79,29 @@ def check_user(payload: dict, token_type: str, session: Session):
     return result
 
 
+def sub_check_access_token(
+    session: Session,
+    access_token: str,
+    refresh_token: str,
+):
+    try:
+        payload = decode_jwt(access_token)
+        result = check_user(payload=payload, token_type="access_token", session=session)
+        if result and payload["token_type"] == "access_token":
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "Bearer",
+                "status": True,
+            }
+    except:
+        try:
+            refreshed_token = release_access_token(refresh_token, session)
+            return refreshed_token
+        except:
+            raise HTTPException(status_code=401, detail="authorization failed")
+
+
 def release_access_token(
     refresh_token: str,
     session: Session,
@@ -91,12 +113,11 @@ def release_access_token(
         )
         if result and payload["token_type"] == "refresh_token":
             token = create_access_token(result)
-            response = JSONResponse(
-                content={
-                    "access_token": token,
-                }
-            )
-            response.set_cookie(key="access_token", value=token)
-            return response
+            return {
+                "access_token": token,
+                "refresh_token": refresh_token,
+                "token_type": "Bearer",
+                "status": True,
+            }
     except:
         raise HTTPException(status_code=401, detail="Token release failed")

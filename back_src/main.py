@@ -1,6 +1,7 @@
 from router import router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from orm_utils import delete_database, create_tables
 
 
 app = FastAPI()
